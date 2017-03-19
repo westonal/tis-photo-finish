@@ -2,6 +2,7 @@ package com.coltsoftware.tis100
 
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class LineTests {
     @Test
@@ -9,6 +10,9 @@ class LineTests {
         val l = LineBuilder(Tokenizer().tokens("MOV 1 ACC"))
                 .nextLine()
         assertEquals(Operation.MOV, l.operation)
+        assertEquals("1", l.source?.token?.tokenString)
+        assertEquals("ACC", l.destination?.token?.tokenString)
+        assertNull(l.label)
     }
 
     @Test
@@ -16,27 +20,38 @@ class LineTests {
         val l = LineBuilder(Tokenizer().tokens("NOP"))
                 .nextLine()
         assertEquals(Operation.NOP, l.operation)
+        assertNull(l.source)
+        assertNull(l.destination)
+        assertNull(l.label)
     }
 
 
 }
 
-data class Line(val operation: Operation)//, var arg1: Token, var arg2: Token)
+class Line(val operation: Operation,
+           val source: Source?,
+           val destination: Destination?,
+           val label: Token?
+)
+
+class Source(val token: Token)
+
+class Destination(val token: Token)
 
 enum class Operation {MOV, NOP }
 
 class LineBuilder(val tokens: List<Token>) {
+    private var idx = 0
+
     fun nextLine(): Line {
-        val opToken = tokens.get(0)
-        return Line(tokenToOperation(opToken))
+        when (tokens[idx++].tokenString) {
+            "MOV" -> return Line(Operation.MOV, nextSource(), nextDestination(), null)
+            "NOP" -> return Line(Operation.NOP, null, null, null)
+            else -> throw RuntimeException("")
+        }
     }
 
-    private fun tokenToOperation(opToken: Token): Operation {
-        var op = Operation.MOV
-        when (opToken.tokenString) {
-            "MOV" -> op = Operation.MOV
-            "NOP" -> op = Operation.NOP
-        }
-        return op
-    }
+    private fun nextSource() = Source(tokens[idx++])
+
+    private fun nextDestination() = Destination(tokens[idx++])
 }
