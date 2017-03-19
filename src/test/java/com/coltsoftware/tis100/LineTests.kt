@@ -1,5 +1,6 @@
 package com.coltsoftware.tis100
 
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -135,7 +136,23 @@ class LineTests {
         assertNull(l.label)
     }
 
+    @Test
+    fun label_read() {
+        val l = LineBuilder(Tokenizer().tokens("ABC:"))
+                .nextLine()
+        assertEquals(Operation.LABEL, l.operation)
+        assertNull(l.source)
+        assertNull(l.destination)
+        assertEquals("ABC", l.label?.token?.tokenString)
+    }
 
+    @Test
+    fun junk() {
+        val lineBuilder = LineBuilder(Tokenizer().tokens("ABC JMP"))
+        assertThatThrownBy({
+            lineBuilder.nextLine()
+        }).hasMessageContaining("Unknown instruction \"ABC\"")
+    }
 }
 
 class Line(val operation: Operation,
@@ -163,14 +180,16 @@ enum class Operation {
     JNZ,
     JGZ,
     JLZ,
-    JRO
+    JRO,
+    LABEL
 }
 
 class LineBuilder(val tokens: List<Token>) {
     private var idx = 0
 
     fun nextLine(): Line {
-        when (tokens[idx++].tokenString) {
+        val token = nextToken()
+        when (token.tokenString) {
             "MOV" -> return Line(Operation.MOV, nextSource(), nextDestination(), null)
             "ADD" -> return Line(Operation.ADD, nextSource(), null, null)
             "SUB" -> return Line(Operation.SUB, nextSource(), null, null)
@@ -184,11 +203,18 @@ class LineBuilder(val tokens: List<Token>) {
             "JGZ" -> return Line(Operation.JGZ, null, null, nextLabel())
             "JLZ" -> return Line(Operation.JLZ, null, null, nextLabel())
             "JRO" -> return Line(Operation.JRO, nextSource(), null, null)
-            else -> throw RuntimeException("")
+            else -> {
+                if (nextToken().tokenString == ":")
+                    return Line(Operation.LABEL, null, null, Label(token))
+                throw RuntimeException(String.format("Unknown instruction \"%s\"",
+                        token.tokenString))
+            }
         }
     }
 
-    private fun nextSource() = Source(tokens[idx++])
-    private fun nextDestination() = Destination(tokens[idx++])
-    private fun nextLabel() = Label(tokens[idx++])
+    private fun nextSource() = Source(nextToken())
+    private fun nextDestination() = Destination(nextToken())
+    private fun nextLabel() = Label(nextToken())
+
+    private fun nextToken() = tokens[idx++]
 }
