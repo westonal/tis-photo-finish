@@ -38,5 +38,23 @@ class TokenizerTests {
                         Token(tokenString = "LEFT", position = 8)
                 )))
     }
+
+    @Test
+    fun colon_is_own_token() {
+        assertThat(Tokenizer().tokens("A:B"),
+                `is`(listOf(Token(tokenString = "A", position = 0),
+                        Token(tokenString = ":", position = 1),
+                        Token(tokenString = "B", position = 2)
+                )))
+    }
+
+    @Test
+    fun colon_is_own_token_spaces() {
+        assertThat(Tokenizer().tokens("A : B"),
+                `is`(listOf(Token(tokenString = "A", position = 0),
+                        Token(tokenString = ":", position = 2),
+                        Token(tokenString = "B", position = 4)
+                )))
+    }
 }
 
