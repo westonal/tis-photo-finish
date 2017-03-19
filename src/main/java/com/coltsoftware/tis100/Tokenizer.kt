@@ -1,17 +1,17 @@
 package com.coltsoftware.tis100
 
 class Tokenizer {
-    fun tokens(s: String): List<TS100Token> {
+    fun tokens(s: String): List<Token> {
         if (s.isEmpty())
             return emptyList()
-        val list = mutableListOf<TS100Token>()
+        val list = mutableListOf<Token>()
         val currentToken = StringBuilder()
         var currentTokenStart = 0
         var index = 0
         s.forEach {
             if (it === ' ') {
                 if (!currentToken.isEmpty()) {
-                    list.add(TS100Token(tokenString = currentToken.toString(),
+                    list.add(Token(tokenString = currentToken.toString(),
                             position = currentTokenStart))
                     currentToken.delete(0, currentToken.length)
                 }
@@ -23,7 +23,7 @@ class Tokenizer {
             index++
         }
         if (!currentToken.isEmpty())
-            list.add(TS100Token(tokenString = currentToken.toString(),
+            list.add(Token(tokenString = currentToken.toString(),
                     position = currentTokenStart))
         return list
     }
